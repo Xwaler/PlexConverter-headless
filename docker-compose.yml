@@ -2,13 +2,10 @@ version: "2.1"
 services:
   plexconverter:
     container_name: plexconverter
-    image: library/python:3.8-buster
-    command: >
-      /bin/sh -c "apt update && apt install -y git ffmpeg &&
-                  git clone https://github.com/Xwaler/PlexConverter-headless.git &&
-                  pip install -r PlexConverter-headless/requirements.txt &&
-                  python -u PlexConverter-headless/converter.py"
+    build: .
+    command: /bin/sh -c "python PlexConverter-headless/converter.py"
     restart: unless-stopped
+    user: 1001:100
     environment:
       - PUID=1000
       - PGID=1000
@@ -19,4 +16,6 @@ services:
       - MAX_BITRATE=1600
     volumes:
       - /path/to/downloads/complete:/downloads
+      - /path/to/config/plexconverter/converted:/converted
+      - /path/to/config/plexconverter/normalized:/normalized
       - /path/to/downloads/optimized:/optimized

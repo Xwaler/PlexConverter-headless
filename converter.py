@@ -15,14 +15,14 @@ AVG_BITRATE = int(os.environ.get('AVERAGE_BITRATE'))
 MAX_BITRATE = int(os.environ.get('MAX_BITRATE'))
 
 DOWNLOADS_FOLDER = '/downloads'
-TEMP_FOLDER = '/tmp'
+CONVERTED_FOLDER = '/converted'
 NORMALIZED_FOLDER = '/normalized'
 OPTIMIZED_FOLDER = '/optimized'
 
 if not os.path.exists(DOWNLOADS_FOLDER):
     os.mkdir(DOWNLOADS_FOLDER)
-if not os.path.exists(TEMP_FOLDER):
-    os.mkdir(TEMP_FOLDER)
+if not os.path.exists(CONVERTED_FOLDER):
+    os.mkdir(CONVERTED_FOLDER)
 if not os.path.exists(NORMALIZED_FOLDER):
     os.mkdir(NORMALIZED_FOLDER)
 if not os.path.exists(OPTIMIZED_FOLDER):
@@ -117,7 +117,7 @@ class LocalItem:
 def convert(item):
     print(f'--- Converting ---')
     input_path = os.path.join(DOWNLOADS_FOLDER, item.relative_path, item.local_file)
-    output_path = os.path.join(TEMP_FOLDER, item.local_file.rsplit('.', 1)[0] + '.mkv')
+    output_path = os.path.join(CONVERTED_FOLDER, item.local_file.rsplit('.', 1)[0] + '.mkv')
 
     nvenc = 'CUDA' in os.environ['PATH']
     video_options = '-c:v h264_nvenc -preset slow -rc:v vbr_hq -cq:v 19' if nvenc \
@@ -154,7 +154,7 @@ def convert(item):
 
 def normalize(item):
     print(f'--- Normalizing ---')
-    input_path = os.path.join(TEMP_FOLDER, item.local_file)
+    input_path = os.path.join(CONVERTED_FOLDER, item.local_file)
     output_path = os.path.join(NORMALIZED_FOLDER, item.relative_path, item.local_file)
 
     command = f'ffmpeg-normalize "{input_path}" -f -v -pr -c:a aac -b:a 128k -ar 48000 -o "{output_path}"'
@@ -213,9 +213,10 @@ if __name__ == '__main__':
         if last_file_event + 30 < time.time():
             c.release()
             for thing in content:
-                path = os.path.join(DOWNLOADS_FOLDER, thing)
-                recurs_process(path)
-                output()
-                cleanup(path)
+                if thing.rsplit('.', 1)[0] not in [x.rsplit('.', 1)[0] for x in os.listdir(OPTIMIZED_FOLDER)]:
+                    path = os.path.join(DOWNLOADS_FOLDER, thing)
+                    recurs_process(path)
+                    output()
+                    cleanup(path)
         else:
             c.release()
