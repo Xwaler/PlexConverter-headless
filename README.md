@@ -1,29 +1,34 @@
 # PlexConverter-headless
 
-Converts video files dropped into the complete folder to H264 stereo. Outputs into optimized.<br>
-Used for post-processing after deluge.
+Converts video files dropped into the complete folder to H264 stereo and outputs into optimized.<br>
+Used for post-processing movies/tv shows after downloading.
+
+### Setup
+Copy the Dockerfile to your system and indicate its path in your docker-compose.yml or Portainer stack.
+Building the container will fetch the rest of the files from this repository.
+
+### Compose
 ```
 version: "2.1"
 services:
   plexconverter:
     container_name: plexconverter
-    image: library/python:3.8-buster
-    command: >
-      /bin/sh -c "apt update && apt install -y git ffmpeg &&
-                  git clone https://github.com/Xwaler/PlexConverter-headless.git &&
-                  pip install -r PlexConverter-headless/requirements.txt &&
-                  python -u PlexConverter-headless/converter.py"
+    image: plexconverter:latest
+    build: 
+      context: /srv/dev-disk-by-label-tank/config/plexconverter
+      dockerfile: plexconverter.Dockerfile
+    user: 1001:100 # plex user:users group
+    command: /bin/sh -c "python PlexConverter-headless/converter.py"
     restart: unless-stopped
     environment:
-      - PUID=1000
-      - PGID=1000
       - TZ=Europe/Paris
       - MAX_VIDEO_WIDTH=1280
       - MAX_VIDEO_HEIGHT=720
       - AVERAGE_BITRATE=1100
       - MAX_BITRATE=1600
     volumes:
-      - /path/to/downloads/complete:/downloads
-      - /path/to/downloads/optimized:/optimized
-
+      - /srv/dev-disk-by-label-tank/downloads/complete:/downloads
+      - /srv/dev-disk-by-label-tank/config/plexconverter/converted:/converted
+      - /srv/dev-disk-by-label-tank/config/plexconverter/normalized:/normalized
+      - /srv/dev-disk-by-label-tank/downloads/optimized:/optimized
 ```

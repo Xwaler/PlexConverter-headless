@@ -2,13 +2,14 @@ version: "2.1"
 services:
   plexconverter:
     container_name: plexconverter
-    build: .
+    image: plexconverter:latest
+    build:
+      context: /path/to/config/plexconverter
+      dockerfile: plexconverter.Dockerfile
+    user: 1001:100 # plex user:users group
     command: /bin/sh -c "python PlexConverter-headless/converter.py"
     restart: unless-stopped
-    user: 1001:100
     environment:
-      - PUID=1000
-      - PGID=1000
       - TZ=Europe/Paris
       - MAX_VIDEO_WIDTH=1280
       - MAX_VIDEO_HEIGHT=720
