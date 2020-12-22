@@ -15,7 +15,7 @@ services:
     container_name: plexconverter
     image: plexconverter:latest
     build: 
-      context: /srv/dev-disk-by-label-tank/config/plexconverter
+      context: /path/to/config/plexconverter
       dockerfile: plexconverter.Dockerfile
     user: 1001:100 # plex user:users group
     command: /bin/sh -c "python PlexConverter-headless/converter.py"
@@ -27,8 +27,8 @@ services:
       - AVERAGE_BITRATE=1100
       - MAX_BITRATE=1600
     volumes:
-      - /srv/dev-disk-by-label-tank/downloads/complete:/downloads
-      - /srv/dev-disk-by-label-tank/config/plexconverter/converted:/converted
-      - /srv/dev-disk-by-label-tank/config/plexconverter/normalized:/normalized
-      - /srv/dev-disk-by-label-tank/downloads/optimized:/optimized
+      - /path/to/downloads/complete:/downloads
+      - /path/to/config/plexconverter/converted:/converted
+      - /path/to/config/plexconverter/normalized:/normalized
+      - /path/to/downloads/optimized:/optimized
 ```
