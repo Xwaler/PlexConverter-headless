@@ -177,9 +177,10 @@ def output():
         dest_path = os.path.join(OPTIMIZED_FOLDER, thing)
         if os.path.isdir(origin_path):
             shutil.copytree(origin_path, dest_path, dirs_exist_ok=True)
+            shutil.rmtree(origin_path)
         else:
             shutil.copy(origin_path, dest_path)
-        os.remove(origin_path)
+            os.remove(origin_path)
 
 
 def cleanup(download_thing):
@@ -203,7 +204,6 @@ def recurs_process(path):
             normalize(item)
         else:
             shutil.copy(path, path.replace(DOWNLOADS_FOLDER, NORMALIZED_FOLDER))
-            os.remove(path)
 
 
 if __name__ == '__main__':
