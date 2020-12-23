@@ -173,9 +173,13 @@ def normalize(item):
 def output():
     print('--- Passing to Radarr/Sonarr ---')
     for thing in os.listdir(NORMALIZED_FOLDER):
-        shutil.copy(os.path.join(NORMALIZED_FOLDER, thing),
-                    os.path.join(OPTIMIZED_FOLDER, thing))
-        os.remove(os.path.join(NORMALIZED_FOLDER, thing))
+        origin_path = os.path.join(NORMALIZED_FOLDER, thing)
+        dest_path = os.path.join(OPTIMIZED_FOLDER, thing)
+        if os.path.isdir(origin_path):
+            shutil.copytree(origin_path, dest_path, dirs_exist_ok=True)
+        else:
+            shutil.copy(origin_path, dest_path)
+        os.remove(origin_path)
 
 
 def cleanup(download_thing):
