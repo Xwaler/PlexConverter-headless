@@ -173,8 +173,9 @@ def normalize(item):
 def output():
     print('--- Passing to Radarr/Sonarr ---')
     for thing in os.listdir(NORMALIZED_FOLDER):
-        shutil.move(os.path.join(NORMALIZED_FOLDER, thing),
+        shutil.copy(os.path.join(NORMALIZED_FOLDER, thing),
                     os.path.join(OPTIMIZED_FOLDER, thing))
+        os.remove(os.path.join(NORMALIZED_FOLDER, thing))
 
 
 def cleanup(download_thing):
@@ -197,7 +198,8 @@ def recurs_process(path):
             convert(item)
             normalize(item)
         else:
-            shutil.move(path, path.replace(DOWNLOADS_FOLDER, NORMALIZED_FOLDER))
+            shutil.copy(path, path.replace(DOWNLOADS_FOLDER, NORMALIZED_FOLDER))
+            os.remove(path)
 
 
 if __name__ == '__main__':
@@ -213,10 +215,9 @@ if __name__ == '__main__':
         if last_file_event + 30 < time.time():
             c.release()
             for thing in content:
-                if thing.rsplit('.', 1)[0] not in [x.rsplit('.', 1)[0] for x in os.listdir(OPTIMIZED_FOLDER)]:
-                    path = os.path.join(DOWNLOADS_FOLDER, thing)
-                    recurs_process(path)
-                    output()
-                    cleanup(path)
+                path = os.path.join(DOWNLOADS_FOLDER, thing)
+                recurs_process(path)
+                output()
+                cleanup(path)
         else:
             c.release()
