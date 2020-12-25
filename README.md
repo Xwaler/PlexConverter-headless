@@ -22,10 +22,9 @@ services:
     restart: unless-stopped
     environment:
       - TZ=Europe/Paris
-      - MAX_VIDEO_WIDTH=1280
-      - MAX_VIDEO_HEIGHT=720
-      - AVERAGE_BITRATE=1100
-      - MAX_BITRATE=1600
+      - VIDEO_CRF=27
+      - VIDEO_MAX_BITRATE=2500
+      - AUDIO_MAX_BITRATE=256
     volumes:
       - /path/to/downloads/complete:/downloads
       - /path/to/config/plexconverter/converted:/converted
