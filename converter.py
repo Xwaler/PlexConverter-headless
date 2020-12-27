@@ -61,15 +61,21 @@ class LocalItem:
         self.video_format = video.format
         self.video_profile = video.format_profile
         self.video_resolution = (video.height, video.width)
-        self.video_bitrate = (video.bit_rate or video.overall_bit_rate or (
-                video.stream_size * 8 / video.duration
-        )) / 1000
+        try:
+            self.video_bitrate = (video.bit_rate or video.overall_bit_rate or (
+                    video.stream_size * 8000 / video.duration
+            )) / 1000
+        except TypeError:
+            self.video_bitrate = 1e99
         self.framerate = video.frame_rate
 
         self.audio_format = audio.format
-        self.audio_bitrate = (audio.bit_rate or audio.overall_bit_rate or (
-                audio.stream_size * 8 / audio.duration
-        )) / 1000
+        try:
+            self.audio_bitrate = (audio.bit_rate or audio.overall_bit_rate or (
+                    audio.stream_size * 8000 / audio.duration
+            )) / 1000
+        except TypeError:
+            self.audio_bitrate = 1e99
         self.audio_channels = audio.channel_s
 
         self.reasons = {}
