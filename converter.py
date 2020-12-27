@@ -3,6 +3,7 @@ import shlex
 import shutil
 import threading
 import time
+import re
 from subprocess import check_call, CalledProcessError
 
 from pymediainfo import MediaInfo
@@ -123,7 +124,9 @@ class LocalItem:
 def convert(item):
     print(f'--- Converting ---')
     input_path = os.path.join(DOWNLOADS_FOLDER, item.relative_path, item.local_file)
-    output_path = os.path.join(CONVERTED_FOLDER, item.local_file.rsplit('.', 1)[0] + '.mkv')
+    output_file = item.local_file.rsplit('.', 1)[0] + '.mkv'
+    output_file = re.sub(r'YTS\.[A-Z]{2}', 'YTS.AG', output_file)
+    output_path = os.path.join(CONVERTED_FOLDER, output_file)
 
     video_options = f"-c:v libx264 -crf {VIDEO_CRF} -pix_fmt yuv420p -profile:v high -level:v 4.1 " \
                     f"-x264-params cabac=1:ref=4:analyse=0x133:me=umh:subme=9:chroma-me=1:deadzone-inter=21:" \
