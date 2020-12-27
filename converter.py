@@ -83,7 +83,7 @@ class LocalItem:
         print(f'Found {self}')
 
     def get_reasons(self):
-        if self.video_format != 'AVC' or not self.video_profile.startswith('High@L4'):
+        if self.video_format != 'AVC' or not self.video_profile.startswith('High'):
             self.reasons['Video codec'] = {'Format': self.video_format,
                                            'Profile': self.video_profile}
 
