@@ -132,7 +132,7 @@ def convert(item):
         item.need_audio_convert() else '-c:a copy'
 
     command = f'ffmpeg -y -v warning -stats -fflags +genpts -i "{input_path}" -movflags fastart -map 0:V ' \
-              f'{video_options} -map 0:a {audio_options} -map 0:s? -c:s srt "{output_path}"'
+              f'{video_options} -map 0:a {audio_options} -map 0:s? -c:s copy "{output_path}"'
 
     try:
         print(command)
