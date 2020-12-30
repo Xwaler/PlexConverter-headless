@@ -28,8 +28,5 @@ services:
       - RADARR_FOLDER=radarr
       - SONARR_FOLDER=sonarr
     volumes:
-      - /path/to/downloads/complete:/downloads
-      - /path/to/config/plexconverter/converted:/converted
-      - /path/to/config/plexconverter/normalized:/normalized
-      - /path/to/downloads/optimized:/optimized
+      - /path/to/downloads:/downloads
 ```

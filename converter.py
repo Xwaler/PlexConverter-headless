@@ -16,17 +16,31 @@ AUDIO_MAX_BITRATE = int(os.environ.get('AUDIO_MAX_BITRATE'))
 RADARR_FOLDER = os.environ.get('RADARR_FOLDER')
 SONARR_FOLDER = os.environ.get('SONARR_FOLDER')
 
-DOWNLOADS_FOLDER = '/downloads'
-CONVERTED_FOLDER = '/converted'
-NORMALIZED_FOLDER = '/normalized'
-OPTIMIZED_FOLDER = '/optimized'
+DOWNLOADS_FOLDER = '/downloads/complete'
+CONVERTED_FOLDER = '/downloads/converted'
+NORMALIZED_FOLDER = '/downloads/normalized'
+OPTIMIZED_FOLDER = '/downloads/optimized'
 
 if not os.path.exists(DOWNLOADS_FOLDER):
     os.mkdir(DOWNLOADS_FOLDER)
+if not os.path.exists(os.path.join(DOWNLOADS_FOLDER, RADARR_FOLDER)):
+    os.mkdir(os.path.join(DOWNLOADS_FOLDER, RADARR_FOLDER))
+if not os.path.exists(os.path.join(DOWNLOADS_FOLDER, SONARR_FOLDER)):
+    os.mkdir(os.path.join(DOWNLOADS_FOLDER, SONARR_FOLDER))
 if not os.path.exists(CONVERTED_FOLDER):
     os.mkdir(CONVERTED_FOLDER)
+else:
+    for thing in os.listdir(CONVERTED_FOLDER):
+        os.remove(os.path.join(CONVERTED_FOLDER, thing))
 if not os.path.exists(NORMALIZED_FOLDER):
     os.mkdir(NORMALIZED_FOLDER)
+else:
+    for thing in os.listdir(NORMALIZED_FOLDER):
+        path = os.path.join(NORMALIZED_FOLDER, thing)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
 if not os.path.exists(OPTIMIZED_FOLDER):
     os.mkdir(OPTIMIZED_FOLDER)
 
@@ -178,13 +192,10 @@ def output():
     print('--- Passing to Radarr/Sonarr ---')
     for thing in os.listdir(NORMALIZED_FOLDER):
         origin_path = os.path.join(NORMALIZED_FOLDER, thing)
-        dest_path = os.path.join(OPTIMIZED_FOLDER, thing)
         if os.path.isdir(origin_path):
-            shutil.copytree(origin_path, dest_path, dirs_exist_ok=True)
-            shutil.rmtree(origin_path)
+            shutil.move(origin_path, OPTIMIZED_FOLDER, copy_function=shutil.copytree)
         else:
-            shutil.copy(origin_path, dest_path)
-            os.remove(origin_path)
+            shutil.move(origin_path, OPTIMIZED_FOLDER, copy_function=shutil.copy2)
 
 
 def cleanup(download_thing):
