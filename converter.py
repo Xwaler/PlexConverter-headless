@@ -203,7 +203,6 @@ def recurs_process(path):
 
 def recurs_output(path):
     new_path = path.replace(NORMALIZED_FOLDER, OPTIMIZED_FOLDER)
-    new_path = re.sub(r'YTS\.[A-Z]{2}', 'YTS.AG', new_path)
     if os.path.isdir(path):
         os.makedirs(new_path, exist_ok=True)
         for thing in os.listdir(path):
