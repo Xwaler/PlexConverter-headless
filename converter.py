@@ -140,9 +140,7 @@ class LocalItem:
 def convert(item):
     print(f'--- Converting ---')
     input_path = os.path.join(DOWNLOADS_FOLDER, item.relative_path, item.local_file)
-    output_file = item.local_file.rsplit('.', 1)[0] + '.mkv'
-    output_file = re.sub(r'YTS\.[A-Z]{2}', 'YTS.AG', output_file)
-    output_path = os.path.join(CONVERTED_FOLDER, output_file)
+    output_path = os.path.join(CONVERTED_FOLDER, item.local_file.rsplit('.', 1)[0] + '.mkv')
 
     video_options = f"-c:v libx264 -crf {VIDEO_CRF} -pix_fmt yuv420p -profile:v high -level:v 4.1 " \
                     f"-x264-params cabac=1:ref=4:analyse=0x133:me=umh:subme=9:chroma-me=1:deadzone-inter=21:" \
@@ -205,6 +203,7 @@ def recurs_process(path):
 
 def recurs_output(path):
     new_path = path.replace(NORMALIZED_FOLDER, OPTIMIZED_FOLDER)
+    new_path = re.sub(r'YTS\.[A-Z]{2}', 'YTS.AG', new_path)
     if os.path.isdir(path):
         os.makedirs(new_path, exist_ok=True)
         for thing in os.listdir(path):
