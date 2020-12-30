@@ -188,28 +188,28 @@ def normalize(item):
         normalize(item)
 
 
-def output():
-    print('--- Passing to Radarr/Sonarr ---')
-    for thing in os.listdir(NORMALIZED_FOLDER):
-        origin_path = os.path.join(NORMALIZED_FOLDER, thing)
-        if os.path.isdir(origin_path):
-            shutil.move(origin_path, OPTIMIZED_FOLDER, copy_function=shutil.copytree)
+def recurs_output(folder):
+    for thing in os.listdir(folder):
+        path = os.path.join(folder, thing)
+        new_path = path.replace(NORMALIZED_FOLDER, OPTIMIZED_FOLDER, 1)
+        if os.path.isdir(path):
+            os.makedirs(new_path, exist_ok=True)
+            recurs_output(path)
         else:
-            shutil.move(origin_path, OPTIMIZED_FOLDER, copy_function=shutil.copy2)
+            shutil.move(path, new_path)
 
 
 def cleanup(download_thing):
-    print('--- Cleanup ---')
     if os.path.isdir(download_thing):
         shutil.rmtree(download_thing)
     else:
         os.remove(download_thing)
-    print('Ok.')
 
 
 def recurs_process(path):
+    new_path = path.replace(DOWNLOADS_FOLDER, NORMALIZED_FOLDER)
     if os.path.isdir(path):
-        os.makedirs(path.replace(DOWNLOADS_FOLDER, NORMALIZED_FOLDER), exist_ok=True)
+        os.makedirs(new_path, exist_ok=True)
         for thing in os.listdir(path):
             recurs_process(os.path.join(path, thing))
     else:
@@ -218,7 +218,7 @@ def recurs_process(path):
             convert(item)
             normalize(item)
         else:
-            shutil.copy(path, path.replace(DOWNLOADS_FOLDER, NORMALIZED_FOLDER))
+            shutil.copy(path, new_path)
 
 
 if __name__ == '__main__':
@@ -237,13 +237,19 @@ if __name__ == '__main__':
             for thing in radarr:
                 path = os.path.join(DOWNLOADS_FOLDER, RADARR_FOLDER, thing)
                 recurs_process(path)
-                output()
+                print('--- Passing to Radarr/Sonarr ---')
+                recurs_output(path)
+                print('--- Cleanup ---')
                 cleanup(path)
+                print('Ok.')
 
             for thing in sonarr:
                 path = os.path.join(DOWNLOADS_FOLDER, SONARR_FOLDER, thing)
                 recurs_process(path)
-                output()
+                print('--- Passing to Radarr/Sonarr ---')
+                recurs_output(path)
+                print('--- Cleanup ---')
                 cleanup(path)
+                print('Ok.')
         else:
             c.release()
