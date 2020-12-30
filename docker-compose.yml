@@ -14,6 +14,8 @@ services:
       - VIDEO_CRF=27
       - VIDEO_MAX_BITRATE=2500
       - AUDIO_MAX_BITRATE=256
+      - RADARR_FOLDER=radarr
+      - SONARR_FOLDER=sonarr
     volumes:
       - /path/to/downloads/complete:/downloads
       - /path/to/config/plexconverter/converted:/converted

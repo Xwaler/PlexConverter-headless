@@ -13,6 +13,8 @@ from watchdog.observers import Observer
 VIDEO_MAX_BITRATE = int(os.environ.get('VIDEO_MAX_BITRATE'))
 VIDEO_CRF = int(os.environ.get('VIDEO_CRF'))
 AUDIO_MAX_BITRATE = int(os.environ.get('AUDIO_MAX_BITRATE'))
+RADARR_FOLDER = os.environ.get('RADARR_FOLDER')
+SONARR_FOLDER = os.environ.get('SONARR_FOLDER')
 
 DOWNLOADS_FOLDER = '/downloads'
 CONVERTED_FOLDER = '/converted'
@@ -217,11 +219,18 @@ if __name__ == '__main__':
         time.sleep(10)
 
         c.acquire()
-        content = os.listdir(DOWNLOADS_FOLDER)
+        radarr = os.listdir(os.path.join(DOWNLOADS_FOLDER, RADARR_FOLDER))
+        sonarr = os.listdir(os.path.join(DOWNLOADS_FOLDER, SONARR_FOLDER))
         if last_file_event + 30 < time.time():
             c.release()
-            for thing in content:
-                path = os.path.join(DOWNLOADS_FOLDER, thing)
+            for thing in radarr:
+                path = os.path.join(DOWNLOADS_FOLDER, RADARR_FOLDER, thing)
+                recurs_process(path)
+                output()
+                cleanup(path)
+
+            for thing in sonarr:
+                path = os.path.join(DOWNLOADS_FOLDER, SONARR_FOLDER, thing)
                 recurs_process(path)
                 output()
                 cleanup(path)
