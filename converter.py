@@ -79,7 +79,7 @@ class LocalItem:
         self.video_profile = video.format_profile
         self.video_resolution = (video.height, video.width)
         try:
-            self.video_bitrate = (video.bit_rate or video.overall_bit_rate or (
+            self.video_bitrate = (video.bit_rate or video.overall_bit_rate or video.nominal_bit_rate or (
                     video.stream_size * 8000 / video.duration
             )) / 1000
         except TypeError:
@@ -88,7 +88,7 @@ class LocalItem:
 
         self.audio_format = audio.format
         try:
-            self.audio_bitrate = (audio.bit_rate or audio.overall_bit_rate or (
+            self.audio_bitrate = (audio.bit_rate or audio.overall_bit_rate or audio.nominal_bit_rate or (
                     audio.stream_size * 8000 / audio.duration
             )) / 1000
         except TypeError:
