@@ -234,6 +234,7 @@ if __name__ == '__main__':
             c.release()
             for category, category_folder in ((radarr, RADARR_FOLDER), (sonarr, SONARR_FOLDER)):
                 for thing in category:
+                    os.makedirs(os.path.join(NORMALIZED_FOLDER, category_folder), exist_ok=True)
                     path = os.path.join(DOWNLOADS_FOLDER, category_folder, thing)
                     recurs_process(path)
                     print('--- Passing to Radarr/Sonarr ---')
