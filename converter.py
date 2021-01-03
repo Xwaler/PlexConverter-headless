@@ -3,7 +3,6 @@ import shlex
 import shutil
 import threading
 import time
-import re
 from subprocess import check_call, CalledProcessError
 
 from pymediainfo import MediaInfo
@@ -18,7 +17,6 @@ SONARR_FOLDER = os.environ.get('SONARR_FOLDER')
 
 DOWNLOADS_FOLDER = '/downloads/complete'
 CONVERTED_FOLDER = '/downloads/converted'
-NORMALIZED_FOLDER = '/downloads/normalized'
 OPTIMIZED_FOLDER = '/downloads/optimized'
 
 if not os.path.exists(DOWNLOADS_FOLDER):
@@ -31,12 +29,7 @@ if not os.path.exists(CONVERTED_FOLDER):
     os.mkdir(CONVERTED_FOLDER)
 else:
     for thing in os.listdir(CONVERTED_FOLDER):
-        os.remove(os.path.join(CONVERTED_FOLDER, thing))
-if not os.path.exists(NORMALIZED_FOLDER):
-    os.mkdir(NORMALIZED_FOLDER)
-else:
-    for thing in os.listdir(NORMALIZED_FOLDER):
-        path = os.path.join(NORMALIZED_FOLDER, thing)
+        path = os.path.join(CONVERTED_FOLDER, thing)
         if os.path.isdir(path):
             shutil.rmtree(path)
         else:
@@ -140,7 +133,7 @@ class LocalItem:
 def convert(item):
     print(f'--- Converting ---')
     input_path = os.path.join(DOWNLOADS_FOLDER, item.relative_path, item.local_file)
-    output_path = os.path.join(CONVERTED_FOLDER, item.local_file.rsplit('.', 1)[0] + '.mkv')
+    output_path = os.path.join(CONVERTED_FOLDER, item.relative_path, item.local_file.rsplit('.', 1)[0] + '.mkv')
 
     video_options = f"-c:v libx264 -crf {VIDEO_CRF} -pix_fmt yuv420p -profile:v high -level:v 4.1 " \
                     f"-x264-params cabac=1:ref=4:analyse=0x133:me=umh:subme=9:chroma-me=1:deadzone-inter=21:" \
@@ -168,26 +161,8 @@ def convert(item):
         convert(item)
 
 
-def normalize(item):
-    print(f'--- Normalizing ---')
-    input_path = os.path.join(CONVERTED_FOLDER, item.local_file)
-    output_path = os.path.join(NORMALIZED_FOLDER, item.relative_path, item.local_file)
-
-    command = f'ffmpeg-normalize "{input_path}" -f -v -pr -c:a aac -ar 44100 -b:a 128k -o "{output_path}"'
-
-    try:
-        print(command)
-        check_call(shlex.split(command))
-        os.remove(input_path)
-
-    except CalledProcessError:
-        print('Normalization failed !')
-        time.sleep(150)
-        normalize(item)
-
-
 def recurs_process(path):
-    new_path = path.replace(DOWNLOADS_FOLDER, NORMALIZED_FOLDER)
+    new_path = path.replace(DOWNLOADS_FOLDER, CONVERTED_FOLDER)
     if os.path.isdir(path):
         os.makedirs(new_path, exist_ok=True)
         for thing in os.listdir(path):
@@ -196,13 +171,12 @@ def recurs_process(path):
         if path.endswith(('.mp4', '.mkv', '.avi')):
             item = LocalItem(MediaInfo.parse(path))
             convert(item)
-            normalize(item)
         else:
             shutil.copy(path, new_path)
 
 
 def recurs_output(path):
-    new_path = path.replace(NORMALIZED_FOLDER, OPTIMIZED_FOLDER)
+    new_path = path.replace(CONVERTED_FOLDER, OPTIMIZED_FOLDER)
     if os.path.isdir(path):
         os.makedirs(new_path, exist_ok=True)
         for thing in os.listdir(path):
@@ -237,7 +211,7 @@ if __name__ == '__main__':
                     path = os.path.join(DOWNLOADS_FOLDER, category_folder, thing)
                     recurs_process(path)
                     print('--- Passing to Radarr/Sonarr ---')
-                    recurs_output(os.path.join(NORMALIZED_FOLDER, category_folder, thing))
+                    recurs_output(os.path.join(CONVERTED_FOLDER, category_folder, thing))
                     print('--- Cleanup ---')
                     cleanup(path)
                     print('Ok.')
