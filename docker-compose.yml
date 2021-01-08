@@ -12,7 +12,9 @@ services:
     environment:
       - TZ=Europe/Paris
       - VIDEO_CRF=27
-      - VIDEO_MAX_BITRATE=2500
+      - VIDEO_MAX_BITRATE=2750
+      - FOR_WIDTH=1920
+      - FOR_HEIGHT=1080
       - AUDIO_MAX_BITRATE=256
       - RADARR_FOLDER=radarr
       - SONARR_FOLDER=sonarr

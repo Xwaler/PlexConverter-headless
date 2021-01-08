@@ -9,9 +9,13 @@ from pymediainfo import MediaInfo
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
-VIDEO_MAX_BITRATE = int(os.environ.get('VIDEO_MAX_BITRATE'))
 VIDEO_CRF = int(os.environ.get('VIDEO_CRF'))
+VIDEO_MAX_BITRATE = int(os.environ.get('VIDEO_MAX_BITRATE'))
+FOR_WIDTH = int(os.environ.get('FOR_WIDTH'))
+FOR_HEIGHT = int(os.environ.get('FOR_HEIGHT'))
+PIXEL_MAX_BITRATE = VIDEO_MAX_BITRATE / (FOR_WIDTH * FOR_HEIGHT)
 AUDIO_MAX_BITRATE = int(os.environ.get('AUDIO_MAX_BITRATE'))
+
 RADARR_FOLDER = os.environ.get('RADARR_FOLDER')
 SONARR_FOLDER = os.environ.get('SONARR_FOLDER')
 
@@ -97,7 +101,7 @@ class LocalItem:
             self.reasons['Video codec'] = {'Format': self.video_format,
                                            'Profile': self.video_profile}
 
-        if self.video_bitrate > VIDEO_MAX_BITRATE:
+        if self.video_bitrate > PIXEL_MAX_BITRATE * (self.video_resolution[0] * self.video_resolution[1]):
             self.reasons['Video bitrate'] = {'Bitrate': self.video_bitrate,
                                              'Resolution': self.video_resolution}
 
@@ -135,10 +139,11 @@ def convert(item):
     input_path = os.path.join(DOWNLOADS_FOLDER, item.relative_path, item.local_file)
     output_path = os.path.join(CONVERTED_FOLDER, item.relative_path, item.local_file.rsplit('.', 1)[0] + '.mkv')
 
+    relative_max_bitrate = PIXEL_MAX_BITRATE * (item.video_resolution[0] * item.video_resolution[1])
     video_options = f"-c:v libx264 -crf {VIDEO_CRF} -pix_fmt yuv420p -profile:v high -level:v 4.1 " \
                     f"-x264-params cabac=1:ref=4:analyse=0x133:me=umh:subme=9:chroma-me=1:deadzone-inter=21:" \
                     f"deadzone-intra=11:b-adapt=2:rc-lookahead=60:qpmax=69:" \
-                    f"vbv-maxrate={VIDEO_MAX_BITRATE}:vbv-bufsize={VIDEO_MAX_BITRATE * 2}:" \
+                    f"vbv-maxrate={relative_max_bitrate}:vbv-bufsize={relative_max_bitrate * 2}:" \
                     f"bframes=5:b-adapt=2:direct=auto:crf-max=51:weightp=2:merange=24:chroma-qp-offset=-3:" \
                     f"sync-lookahead=2:psy-rd=1.00,0.15:trellis=2:min-keyint=23:partitions=all" if \
         item.need_video_convert() else '-c:v copy'
