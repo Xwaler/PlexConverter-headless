@@ -91,7 +91,7 @@ class LocalItem:
             self.audio_bitrate = 1e99
         try:
             self.audio_channels = int(audio.channel_s)
-        except TypeError:
+        except ValueError:
             self.audio_channels = 6
 
         self.reasons = {}
