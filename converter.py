@@ -81,7 +81,6 @@ class LocalItem:
             )) / 1000
         except TypeError:
             self.video_bitrate = 1e99
-        self.framerate = video.frame_rate
 
         self.audio_format = audio.format
         try:
@@ -90,7 +89,10 @@ class LocalItem:
             )) / 1000
         except TypeError:
             self.audio_bitrate = 1e99
-        self.audio_channels = audio.channel_s
+        try:
+            self.audio_channels = int(audio.channel_s)
+        except TypeError:
+            self.audio_channels = 6
 
         self.reasons = {}
         self.get_reasons()
@@ -104,9 +106,6 @@ class LocalItem:
         if self.video_bitrate > PIXEL_MAX_BITRATE * (self.video_resolution[0] * self.video_resolution[1]):
             self.reasons['Video bitrate'] = {'Bitrate': self.video_bitrate,
                                              'Resolution': self.video_resolution}
-
-        if not self.framerate or float(self.framerate) > 30:
-            self.reasons['Framerate'] = self.framerate
 
         if self.audio_format == 'AAC LC':
             self.reasons['Audio codec'] = self.audio_format
@@ -122,8 +121,7 @@ class LocalItem:
 
     def need_video_convert(self):
         return 'Video codec' in self.reasons or \
-               'Video bitrate' in self.reasons or \
-               'Framerate' in self.reasons
+               'Video bitrate' in self.reasons
 
     def need_audio_convert(self):
         return 'Audio codec' in self.reasons or \
