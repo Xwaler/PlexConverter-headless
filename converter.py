@@ -137,7 +137,7 @@ def convert(item):
     input_path = os.path.join(DOWNLOADS_FOLDER, item.relative_path, item.local_file)
     output_path = os.path.join(CONVERTED_FOLDER, item.relative_path, item.local_file.rsplit('.', 1)[0] + '.mkv')
 
-    relative_max_bitrate = PIXEL_MAX_BITRATE * (item.video_resolution[0] * item.video_resolution[1])
+    relative_max_bitrate = round(PIXEL_MAX_BITRATE * (item.video_resolution[0] * item.video_resolution[1]))
     video_options = f"-c:v libx264 -crf {VIDEO_CRF} -pix_fmt yuv420p -profile:v high -level:v 4.1 " \
                     f"-x264-params cabac=1:ref=4:analyse=0x133:me=umh:subme=9:chroma-me=1:deadzone-inter=21:" \
                     f"deadzone-intra=11:b-adapt=2:rc-lookahead=60:qpmax=69:" \
