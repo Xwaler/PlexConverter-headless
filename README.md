@@ -14,11 +14,10 @@ services:
   plexconverter:
     container_name: plexconverter
     image: plexconverter:latest
-    build: 
-      context: /path/to/config/plexconverter
-      dockerfile: plexconverter.Dockerfile
+    build:
+      context: /path/to/config/plexconverter/PlexConverter-headless
     user: 1001:100 # plex user:users group
-    command: /bin/sh -c "python PlexConverter-headless/converter.py"
+    command: /bin/sh -c "python /config/PlexConverter-headless/converter.py"
     restart: unless-stopped
     environment:
       - TZ=Europe/Paris
@@ -30,5 +29,6 @@ services:
       - RADARR_FOLDER=radarr
       - SONARR_FOLDER=sonarr
     volumes:
+      - /path/to/config:/config
       - /path/to/downloads:/downloads
 ```
