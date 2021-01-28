@@ -107,7 +107,7 @@ class LocalItem:
             self.reasons['Video bitrate'] = {'Bitrate': self.video_bitrate,
                                              'Resolution': self.video_resolution}
 
-        if self.audio_format == 'AAC LC':
+        if self.audio_format != 'AAC LC':
             self.reasons['Audio codec'] = self.audio_format
 
         if self.audio_bitrate > AUDIO_MAX_BITRATE:
