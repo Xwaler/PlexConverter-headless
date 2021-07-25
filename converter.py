@@ -78,7 +78,6 @@ class LocalItem:
             self.video_bitrate = 1e99
 
         self.audio_format = audio.format
-        print(dir(audio))
         self.audio_format_profile = audio.format_profile or audio.format_additionalfeatures
         try:
             self.audio_bitrate = (audio.bit_rate or audio.overall_bit_rate or audio.nominal_bit_rate or (
