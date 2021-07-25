@@ -22,6 +22,7 @@ SONARR_FOLDER = os.environ.get('SONARR_FOLDER')
 DOWNLOADS_FOLDER = '/downloads/complete'
 CONVERTED_FOLDER = '/downloads/converted'
 OPTIMIZED_FOLDER = '/downloads/optimized'
+TEMP_FOLDER = '/tmp'
 
 if not os.path.exists(DOWNLOADS_FOLDER):
     os.mkdir(DOWNLOADS_FOLDER)
@@ -31,13 +32,6 @@ if not os.path.exists(os.path.join(DOWNLOADS_FOLDER, SONARR_FOLDER)):
     os.mkdir(os.path.join(DOWNLOADS_FOLDER, SONARR_FOLDER))
 if not os.path.exists(CONVERTED_FOLDER):
     os.mkdir(CONVERTED_FOLDER)
-else:
-    for thing in os.listdir(CONVERTED_FOLDER):
-        path = os.path.join(CONVERTED_FOLDER, thing)
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        else:
-            os.remove(path)
 if not os.path.exists(OPTIMIZED_FOLDER):
     os.mkdir(OPTIMIZED_FOLDER)
 
@@ -61,7 +55,8 @@ class AnyEventHandler(FileSystemEventHandler):
 
 
 class LocalItem:
-    def __init__(self, metadata):
+    def __init__(self, path):
+        metadata = MediaInfo.parse(path)
         general = metadata.general_tracks[0]
         video = metadata.video_tracks[0]
         audio = metadata.audio_tracks[0]
@@ -132,10 +127,15 @@ class LocalItem:
         return f'{os.path.join(self.relative_path, self.local_file)} | {self.reasons}'
 
 
+def isNotAlreadyConverted(item):
+    convertedPath = os.path.join(CONVERTED_FOLDER, item.relative_path, item.local_file.rsplit('.', 1)[0] + '.mkv')
+    return not os.path.exists(convertedPath)
+
+
 def convert(item):
-    print(f'--- Converting ---')
+    print('--- Converting ---')
     input_path = os.path.join(DOWNLOADS_FOLDER, item.relative_path, item.local_file)
-    output_path = os.path.join(CONVERTED_FOLDER, item.relative_path, item.local_file.rsplit('.', 1)[0] + '.mkv')
+    output_path = os.path.join(TEMP_FOLDER, item.local_file.rsplit('.', 1)[0] + '.mkv')
 
     relative_max_bitrate = round(PIXEL_MAX_BITRATE * (item.video_resolution[0] * item.video_resolution[1]))
     video_options = f"-c:v libx264 -crf {VIDEO_CRF} -pix_fmt yuv420p -profile:v high -level:v 4.1 " \
@@ -154,9 +154,12 @@ def convert(item):
               f'{video_options} -map 0:a {audio_options} -map 0:s? -c:s copy "{output_path}"'
 
     try:
+        if os.path.exists(output_path):
+            os.remove(output_path)
         print(command)
         check_call(shlex.split(command))
         item.local_file = os.path.basename(output_path)
+        shutil.move(output_path, os.path.join(CONVERTED_FOLDER, item.relative_path, item.local_file))
 
     except CalledProcessError:
         print('Conversion failed !')
@@ -172,9 +175,10 @@ def recurs_process(path):
             recurs_process(os.path.join(path, thing))
     else:
         if path.endswith(('.mp4', '.mkv', '.avi')):
-            item = LocalItem(MediaInfo.parse(path))
-            convert(item)
-        else:
+            item = LocalItem(path)
+            if isNotAlreadyConverted(item):
+                convert(item)
+        elif not os.path.exists(new_path):
             shutil.copy(path, new_path)
 
 
