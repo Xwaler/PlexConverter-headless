@@ -22,7 +22,7 @@ SONARR_FOLDER = os.environ.get('SONARR_FOLDER')
 DOWNLOADS_FOLDER = '/downloads/complete'
 CONVERTED_FOLDER = '/downloads/converted'
 OPTIMIZED_FOLDER = '/downloads/optimized'
-TEMP_FOLDER = '/tmp'
+TEMPORARY_FOLDER = '/downloads/temporary'
 
 if not os.path.exists(DOWNLOADS_FOLDER):
     os.mkdir(DOWNLOADS_FOLDER)
@@ -34,6 +34,15 @@ if not os.path.exists(CONVERTED_FOLDER):
     os.mkdir(CONVERTED_FOLDER)
 if not os.path.exists(OPTIMIZED_FOLDER):
     os.mkdir(OPTIMIZED_FOLDER)
+if not os.path.exists(TEMPORARY_FOLDER):
+    os.mkdir(TEMPORARY_FOLDER)
+else:
+    for thing in os.listdir(TEMPORARY_FOLDER):
+        path = os.path.join(TEMPORARY_FOLDER, thing)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
 
 c = threading.Condition()
 last_file_event = 0
@@ -137,7 +146,7 @@ def isNotAlreadyConverted(item):
 def convert(item):
     print('--- Converting ---')
     input_path = os.path.join(DOWNLOADS_FOLDER, item.relative_path, item.local_file)
-    output_path = os.path.join(TEMP_FOLDER, item.local_file.rsplit('.', 1)[0] + '.mkv')
+    output_path = os.path.join(TEMPORARY_FOLDER, item.local_file.rsplit('.', 1)[0] + '.mkv')
 
     relative_max_bitrate = round(PIXEL_MAX_BITRATE * (item.video_resolution[0] * item.video_resolution[1]))
     video_options = f"-c:v libx264 -crf {VIDEO_CRF} -pix_fmt yuv420p -profile:v high -level:v 4.1 " \
