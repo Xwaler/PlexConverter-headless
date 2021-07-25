@@ -78,6 +78,8 @@ class LocalItem:
             self.video_bitrate = 1e99
 
         self.audio_format = audio.format
+        print(dir(audio))
+        self.audio_format_profile = audio.format_profile or audio.format_additionalfeatures
         try:
             self.audio_bitrate = (audio.bit_rate or audio.overall_bit_rate or audio.nominal_bit_rate or (
                     audio.stream_size * 8000 / audio.duration
@@ -102,8 +104,9 @@ class LocalItem:
             self.reasons['Video bitrate'] = {'Bitrate': self.video_bitrate,
                                              'Resolution': self.video_resolution}
 
-        if self.audio_format != 'AAC LC':
-            self.reasons['Audio codec'] = self.audio_format
+        if self.audio_format != 'AAC' or self.audio_format_profile != 'LC':
+            self.reasons['Audio codec'] = {'Format': self.audio_format,
+                                           'Complexity': self.audio_format_profile}
 
         if self.audio_bitrate > AUDIO_MAX_BITRATE:
             self.reasons['Audio bitrate'] = self.audio_bitrate
