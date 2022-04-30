@@ -1,3 +1,2 @@
-# ffmpeg (sudo apt install ffmpeg)
 watchdog
 pymediainfo
