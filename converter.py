@@ -7,7 +7,7 @@ from subprocess import check_call, CalledProcessError, STDOUT, DEVNULL
 from typing import Dict, Optional
 
 from pymediainfo import MediaInfo
-from watchdog.events import FileSystemEvent, FileSystemEventHandler
+from watchdog.events import FileSystemEvent, FileSystemEventHandler, FileOpenedEvent
 from watchdog.observers import Observer
 
 VIDEO_CRF = int(os.environ.get("VIDEO_CRF"))
@@ -60,7 +60,7 @@ class AnyEventHandler(FileSystemEventHandler):
         t = time.time()
         if t > last_file_event:
             last_file_event = t
-        if (
+        if not isinstance(event, FileOpenedEvent) and (
             not isinstance(last_event, FileSystemEvent)
             or event.src_path != last_event.src_path
         ):
@@ -290,7 +290,12 @@ if __name__ == "__main__":
     observer.schedule(AnyEventHandler(), DOWNLOADS_FOLDER, recursive=True)
     observer.start()
 
-    threads: Dict[str, Optional[threading.Thread]] = {"fast": None, "long": None}
+    fast_thread_key = "fast"
+    long_thread_key = "long"
+    threads: Dict[str, Optional[threading.Thread]] = {
+        fast_thread_key: None,
+        long_thread_key: None,
+    }
 
     while True:
         time.sleep(10)
@@ -310,7 +315,9 @@ if __name__ == "__main__":
         ):
             for thing in category:
                 will_be_long_task = will_be_long_running_task(category_folder, thing)
-                target_thread_key = "long" if will_be_long_task else "fast"
+                target_thread_key = (
+                    long_thread_key if will_be_long_task else fast_thread_key
+                )
                 if (
                     threads[target_thread_key] is not None
                     and threads[target_thread_key].is_alive()
