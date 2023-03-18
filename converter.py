@@ -225,7 +225,7 @@ def will_be_long_running_task(category_folder, thing):
 def recurse_explore_complexity(path):
     if os.path.isdir(path):
         return any(
-            will_be_long_running_task(os.path.join(path, thing))
+            recurse_explore_complexity(os.path.join(path, thing))
             for thing in os.listdir(path)
         )
     else:
@@ -237,7 +237,9 @@ def recurse_explore_complexity(path):
 
 def process(category_folder, thing):
     if DRY_RUN:
-        print(f"Dry run processing of {category_folder} | {thing}")
+        print(f"Dry run processing ({category_folder} | {thing})")
+        time.sleep(30)
+        print(f"Done ({category_folder} | {thing})")
         return
     os.makedirs(os.path.join(CONVERTED_FOLDER, category_folder), exist_ok=True)
     path = os.path.join(DOWNLOADS_FOLDER, category_folder, thing)
