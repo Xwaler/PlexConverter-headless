@@ -4,7 +4,7 @@ import shutil
 import threading
 import time
 from subprocess import check_call, CalledProcessError, STDOUT, DEVNULL
-from typing import Optional
+from typing import Dict, Optional
 
 from pymediainfo import MediaInfo
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
@@ -290,8 +290,7 @@ if __name__ == "__main__":
     observer.schedule(AnyEventHandler(), DOWNLOADS_FOLDER, recursive=True)
     observer.start()
 
-    fast_running_thread: Optional[threading.Thread] = None
-    long_running_thread: Optional[threading.Thread] = None
+    threads: Dict[str, Optional[threading.Thread]] = {"fast": None, "long": None}
 
     while True:
         time.sleep(10)
@@ -302,10 +301,7 @@ if __name__ == "__main__":
         c.release()
         if last_file_event + 30 >= time.time():
             continue
-        if all(
-            thread is not None and thread.is_alive()
-            for thread in (fast_running_thread, long_running_thread)
-        ):
+        if all(thread is not None and thread.is_alive() for thread in threads.values()):
             # no process thread available, wait
             continue
         for category, category_folder in (
@@ -314,16 +310,15 @@ if __name__ == "__main__":
         ):
             for thing in category:
                 will_be_long_task = will_be_long_running_task(category_folder, thing)
-                target_thread = (
-                    long_running_thread if will_be_long_task else fast_running_thread
-                )
-                if target_thread is not None and target_thread.is_alive():
+                target_thread_key = "long" if will_be_long_task else "fast"
+                if (
+                    threads[target_thread_key] is not None
+                    and threads[target_thread_key].is_alive()
+                ):
                     # not available
                     continue
-                print(
-                    f"--- Starting {'long' if will_be_long_task else 'fast'} running task ---"
-                )
-                target_thread = threading.Thread(
+                print(f"--- Starting {target_thread_key} running task ---")
+                threads[target_thread_key] = threading.Thread(
                     target=process, args=[category_folder, thing]
                 )
-                target_thread.start()
+                threads[target_thread_key].start()
