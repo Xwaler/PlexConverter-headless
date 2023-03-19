@@ -10,17 +10,18 @@ from pymediainfo import MediaInfo
 from watchdog.events import FileSystemEvent, FileSystemEventHandler, FileOpenedEvent
 from watchdog.observers import Observer
 
-VIDEO_CRF = int(os.environ.get("VIDEO_CRF"))
-VIDEO_MAX_BITRATE = int(os.environ.get("VIDEO_MAX_BITRATE"))
-FOR_WIDTH = int(os.environ.get("FOR_WIDTH"))
-FOR_HEIGHT = int(os.environ.get("FOR_HEIGHT"))
-PIXEL_MAX_BITRATE = VIDEO_MAX_BITRATE / (FOR_WIDTH * FOR_HEIGHT)
-AUDIO_MAX_BITRATE = int(os.environ.get("AUDIO_MAX_BITRATE"))
+VIDEO_CRF = int(os.environ.get("VIDEO_CRF", 24))
+FOR_WIDTH = int(os.environ.get("FOR_WIDTH", 1920))
+FOR_HEIGHT = int(os.environ.get("FOR_HEIGHT", 1080))
+VIDEO_MAX_BITRATE = int(os.environ.get("VIDEO_MAX_BITRATE", 3500))
+AUDIO_MAX_BITRATE = int(os.environ.get("AUDIO_MAX_BITRATE", 256))
 
-RADARR_FOLDER = os.environ.get("RADARR_FOLDER")
-SONARR_FOLDER = os.environ.get("SONARR_FOLDER")
+RADARR_FOLDER = os.environ.get("RADARR_FOLDER", "radarr")
+SONARR_FOLDER = os.environ.get("SONARR_FOLDER", "sonarr")
 
 DRY_RUN = os.environ.get("DRY_RUN", "False").lower() in ("1", "true")
+
+PIXEL_MAX_BITRATE = VIDEO_MAX_BITRATE / (FOR_WIDTH * FOR_HEIGHT)
 
 DOWNLOADS_FOLDER = "/downloads/complete"
 CONVERTED_FOLDER = "/downloads/converted"
@@ -176,22 +177,14 @@ def convert(item):
         TEMPORARY_FOLDER, item.local_file.rsplit(".", 1)[0] + ".mkv"
     )
 
-    relative_max_bitrate = round(
-        PIXEL_MAX_BITRATE * (item.video_resolution[0] * item.video_resolution[1])
-    )
     video_options = (
-        f"-c:v libx264 -crf {VIDEO_CRF} -pix_fmt yuv420p -profile:v high -level:v 4.1 "
-        f"-x264-params cabac=1:ref=4:analyse=0x133:me=umh:subme=9:chroma-me=1:deadzone-inter=21:"
-        f"deadzone-intra=11:b-adapt=2:rc-lookahead=60:qpmax=69:"
-        f"vbv-maxrate={relative_max_bitrate}:vbv-bufsize={relative_max_bitrate * 2}:"
-        f"bframes=5:b-adapt=2:direct=auto:crf-max=51:weightp=2:merange=24:chroma-qp-offset=-3:"
-        f"sync-lookahead=2:psy-rd=1.00,0.15:trellis=2:min-keyint=23:partitions=all"
+        f"-c:v libx264 -preset medium -crf {VIDEO_CRF} -pix_fmt yuv420p -profile:v high -level:v 4.1"
         if item.need_video_convert()
         else "-c:v copy"
     )
 
     audio_options = (
-        f"-c:a aac -ar 44100 -b:a 128k " f"-ac {min(item.audio_channels, 2)}"
+        f"-c:a aac -ar 44100 -b:a 128k -ac {min(item.audio_channels, 2)}"
         if item.need_audio_convert()
         else "-c:a copy"
     )

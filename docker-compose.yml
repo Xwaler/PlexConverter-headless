@@ -10,13 +10,13 @@ services:
     restart: unless-stopped
     environment:
       - TZ=Europe/Paris
-      - VIDEO_CRF=27
-      - VIDEO_MAX_BITRATE=2750
-      - FOR_WIDTH=1920
-      - FOR_HEIGHT=1080
+      - VIDEO_CRF=25
+      - VIDEO_MAX_BITRATE=3500
       - AUDIO_MAX_BITRATE=256
       - RADARR_FOLDER=radarr
       - SONARR_FOLDER=sonarr
+      - FOR_WIDTH=1920
+      - FOR_HEIGHT=1080
     volumes:
       - /path/to/config:/config
       - /path/to/downloads:/downloads
