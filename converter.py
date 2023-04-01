@@ -163,11 +163,14 @@ class LocalItem:
         return f"{os.path.join(self.relative_path, self.local_file)} | {self.reasons}"
 
 
-def is_not_already_converted(item):
-    convertedPath = os.path.join(
+def get_converted_path(item):
+    return os.path.join(
         CONVERTED_FOLDER, item.relative_path, item.local_file.rsplit(".", 1)[0] + ".mkv"
     )
-    return not os.path.exists(convertedPath)
+
+
+def is_not_already_converted(item):
+    return not os.path.exists(get_converted_path(item))
 
 
 def convert(item):
@@ -199,10 +202,11 @@ def convert(item):
             os.remove(output_path)
         print(command)
         check_call(shlex.split(command), stdout=DEVNULL, stderr=STDOUT)
-        item.local_file = os.path.basename(output_path)
         shutil.move(
             output_path,
-            os.path.join(CONVERTED_FOLDER, item.relative_path, item.local_file),
+            os.path.join(
+                CONVERTED_FOLDER, item.relative_path, os.path.basename(output_path)
+            ),
         )
     except CalledProcessError:
         print("Conversion failed !")
@@ -256,6 +260,7 @@ def recurs_process(path):
             if is_not_already_converted(item):
                 print(f"Found {item}")
                 convert(item)
+            item.local_file = os.path.basename(get_converted_path(item))
         elif not os.path.exists(new_path):
             shutil.copy(path, new_path)
 
