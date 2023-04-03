@@ -74,8 +74,8 @@ class LocalItem:
     def __init__(self, path):
         metadata = MediaInfo.parse(path)
         general = metadata.general_tracks[0]
-        video = metadata.video_tracks[0]
-        audio = metadata.audio_tracks[0]
+        video = metadata.video_tracks[0] if metadata.video_tracks else None
+        audio = metadata.audio_tracks[0] if metadata.audio_tracks else None
 
         self.local_file = os.path.basename(general.complete_name)
         self.relative_path = os.path.dirname(general.complete_name).replace(
@@ -85,36 +85,44 @@ class LocalItem:
             self.relative_path = self.relative_path[1:]
         self.container = general.format
 
-        self.video_format = video.format
-        self.video_profile = video.format_profile
-        self.video_resolution = (video.height, video.width)
-        try:
-            self.video_bitrate = (
-                video.bit_rate
-                or video.overall_bit_rate
-                or video.nominal_bit_rate
-                or (video.stream_size * 8000 / video.duration)
-            ) / 1000
-        except TypeError:
+        self.video_format = getattr(video, "format", None)
+        self.video_profile = getattr(video, "format_profile", None)
+        if video:
+            self.video_resolution = (video.height, video.width)
+            try:
+                self.video_bitrate = (
+                    video.bit_rate
+                    or video.overall_bit_rate
+                    or video.nominal_bit_rate
+                    or (video.stream_size * 8000 / video.duration)
+                ) / 1000
+            except TypeError:
+                self.video_bitrate = 1e99
+        else:
+            self.video_resolution = None
             self.video_bitrate = 1e99
 
-        self.audio_format = audio.format
-        self.audio_format_profile = (
-            audio.format_profile or audio.format_additionalfeatures
+        self.audio_format = getattr(audio, "format", None)
+        self.audio_format_profile = getattr(
+            audio, "format_profile", getattr(audio, "format_additionalfeatures", None)
         )
-        try:
-            self.audio_bitrate = (
-                audio.bit_rate
-                or audio.overall_bit_rate
-                or audio.nominal_bit_rate
-                or (audio.stream_size * 8000 / audio.duration)
-            ) / 1000
-        except TypeError:
+        if audio:
+            try:
+                self.audio_bitrate = (
+                    audio.bit_rate
+                    or audio.overall_bit_rate
+                    or audio.nominal_bit_rate
+                    or (audio.stream_size * 8000 / audio.duration)
+                ) / 1000
+            except TypeError:
+                self.audio_bitrate = 1e99
+            try:
+                self.audio_channels = int(audio.channel_s)
+            except ValueError:
+                self.audio_channels = 1e99
+        else:
             self.audio_bitrate = 1e99
-        try:
-            self.audio_channels = int(audio.channel_s)
-        except ValueError:
-            self.audio_channels = 6
+            self.audio_channels = 1e99
 
         self.reasons = {}
         self.get_reasons()
@@ -126,7 +134,7 @@ class LocalItem:
                 "Profile": self.video_profile,
             }
 
-        if self.video_bitrate > PIXEL_MAX_BITRATE * (
+        if self.video_resolution is None or self.video_bitrate > PIXEL_MAX_BITRATE * (
             self.video_resolution[0] * self.video_resolution[1]
         ):
             self.reasons["Video bitrate"] = {
