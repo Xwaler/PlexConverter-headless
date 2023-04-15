@@ -71,7 +71,7 @@ class AnyEventHandler(FileSystemEventHandler):
 
 
 class LocalItem:
-    def __init__(self, path):
+    def __init__(self, path: str):
         metadata = MediaInfo.parse(path)
         general = metadata.general_tracks[0]
         video = metadata.video_tracks[0] if metadata.video_tracks else None
@@ -127,7 +127,7 @@ class LocalItem:
         self.reasons = {}
         self.get_reasons()
 
-    def get_reasons(self):
+    def get_reasons(self) -> None:
         if self.video_format != "AVC" or not self.video_profile.startswith("High"):
             self.reasons["Video codec"] = {
                 "Format": self.video_format,
@@ -157,31 +157,31 @@ class LocalItem:
         if self.container != "Matroska" or not self.local_file.endswith(".mkv"):
             self.reasons["Container"] = self.container
 
-    def need_video_convert(self):
+    def need_video_convert(self) -> bool:
         return "Video codec" in self.reasons or "Video bitrate" in self.reasons
 
-    def need_audio_convert(self):
+    def need_audio_convert(self) -> bool:
         return (
             "Audio codec" in self.reasons
             or "Audio bitrate" in self.reasons
             or "Audio channels" in self.reasons
         )
 
+    def get_converted_path(self) -> str:
+        return os.path.join(
+            CONVERTED_FOLDER,
+            self.relative_path,
+            self.local_file.rsplit(".", 1)[0] + ".mkv",
+        )
+
+    def is_not_already_converted(self) -> bool:
+        return not os.path.exists(self.get_converted_path())
+
     def __repr__(self):
         return f"{os.path.join(self.relative_path, self.local_file)} | {self.reasons}"
 
 
-def get_converted_path(item):
-    return os.path.join(
-        CONVERTED_FOLDER, item.relative_path, item.local_file.rsplit(".", 1)[0] + ".mkv"
-    )
-
-
-def is_not_already_converted(item):
-    return not os.path.exists(get_converted_path(item))
-
-
-def convert(item):
+def convert(item: LocalItem):
     print("--- Converting ---")
     input_path = os.path.join(DOWNLOADS_FOLDER, item.relative_path, item.local_file)
     output_path = os.path.join(
@@ -222,12 +222,12 @@ def convert(item):
         convert(item)
 
 
-def will_be_long_running_task(category_folder, thing):
+def will_be_long_running_task(category_folder: str, thing: str) -> bool:
     path = os.path.join(DOWNLOADS_FOLDER, category_folder, thing)
     return recurse_explore_complexity(path)
 
 
-def recurse_explore_complexity(path):
+def recurse_explore_complexity(path: str) -> bool:
     if os.path.isdir(path):
         return any(
             recurse_explore_complexity(os.path.join(path, thing))
@@ -240,7 +240,7 @@ def recurse_explore_complexity(path):
         return item.need_video_convert()
 
 
-def process(category_folder, thing):
+def process(category_folder: str, thing: str) -> None:
     if DRY_RUN:
         print(f"Dry run processing ({category_folder} | {thing})")
         time.sleep(30)
@@ -250,15 +250,24 @@ def process(category_folder, thing):
     path = os.path.join(DOWNLOADS_FOLDER, category_folder, thing)
     recurs_process(path)
     print("--- Passing to Radarr/Sonarr ---")
-    output_thing = (thing.rsplit(".", 1)[0] + ".mkv") if os.path.isfile(path) else thing
-    output_path = os.path.join(CONVERTED_FOLDER, category_folder, output_thing)
-    recurs_output(output_path)
+    if os.path.isfile(path):
+        converted_filename = thing.rsplit(".", 1)[0] + ".mkv"
+        converted_file = os.path.join(
+            CONVERTED_FOLDER, category_folder, converted_filename
+        )
+        output_folder = converted_file.replace(CONVERTED_FOLDER, OPTIMIZED_FOLDER)
+        os.makedirs(output_folder, exist_ok=True)
+        output_file = os.path.join(output_folder, converted_filename)
+        shutil.move(converted_file, output_file)
+    else:
+        converted_folder = os.path.join(CONVERTED_FOLDER, category_folder, thing)
+        recurs_output(converted_folder)
     print("--- Cleanup ---")
     cleanup(path)
     print("Done.")
 
 
-def recurs_process(path):
+def recurs_process(path: str):
     new_path = path.replace(DOWNLOADS_FOLDER, CONVERTED_FOLDER)
     if os.path.isdir(path):
         os.makedirs(new_path, exist_ok=True)
@@ -267,14 +276,14 @@ def recurs_process(path):
     else:
         if path.endswith((".mp4", ".mkv", ".avi")):
             item = LocalItem(path)
-            if is_not_already_converted(item):
+            if item.is_not_already_converted():
                 print(f"Found {item}")
                 convert(item)
         elif not os.path.exists(new_path):
             shutil.copy(path, new_path)
 
 
-def recurs_output(path):
+def recurs_output(path: str):
     new_path = path.replace(CONVERTED_FOLDER, OPTIMIZED_FOLDER)
     if os.path.isdir(path):
         os.makedirs(new_path, exist_ok=True)
@@ -285,7 +294,7 @@ def recurs_output(path):
         shutil.move(path, new_path)
 
 
-def cleanup(path):
+def cleanup(path: str):
     if os.path.isdir(path):
         shutil.rmtree(path)
     else:
