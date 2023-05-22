@@ -211,8 +211,9 @@ def convert(item: LocalItem):
             os.remove(output_path)
         print(command)
         result = subprocess.run(
-            shlex.split(command), stdout=DEVNULL, stderr=PIPE, check=True
+            shlex.split(command), stdout=DEVNULL, stderr=PIPE
         )
+        result.check_returncode()
         shutil.move(
             output_path,
             os.path.join(
