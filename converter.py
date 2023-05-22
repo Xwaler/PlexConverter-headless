@@ -3,7 +3,8 @@ import shlex
 import shutil
 import threading
 import time
-from subprocess import check_call, CalledProcessError, STDOUT, DEVNULL
+import subprocess
+from subprocess import CalledProcessError, PIPE, DEVNULL
 from typing import Dict, Optional
 
 from pymediainfo import MediaInfo
@@ -209,7 +210,9 @@ def convert(item: LocalItem):
         if os.path.exists(output_path):
             os.remove(output_path)
         print(command)
-        check_call(shlex.split(command), stdout=DEVNULL, stderr=STDOUT)
+        result = subprocess.run(
+            shlex.split(command), stdout=DEVNULL, stderr=PIPE, check=True
+        )
         shutil.move(
             output_path,
             os.path.join(
@@ -217,7 +220,7 @@ def convert(item: LocalItem):
             ),
         )
     except CalledProcessError:
-        print("Conversion failed !")
+        print(f"Conversion failed !\n{result.stderr}")
         time.sleep(150)
         convert(item)
 
