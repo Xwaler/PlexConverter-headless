@@ -78,6 +78,14 @@ class LocalItem:
         video = metadata.video_tracks[0] if metadata.video_tracks else None
         audio = metadata.audio_tracks[0] if metadata.audio_tracks else None
 
+        self.bad_subtitles = [
+            text_track
+            for text_track in metadata.text_tracks
+            if text_track.track_type
+            if getattr(text_track, "format", "").upper() != "UTF-8"
+            and getattr(text_track, "id", None) is not None
+        ]
+
         self.local_file = os.path.basename(general.complete_name)
         self.relative_path = os.path.dirname(general.complete_name).replace(
             DOWNLOADS_FOLDER, "", 1
@@ -200,19 +208,20 @@ def convert(item: LocalItem):
         if item.need_audio_convert()
         else "-c:a copy"
     )
-
+    bad_subtitles_options = " ".join(
+        f"-map -0:s:{getattr(bad_subtitle, 'id')}"
+        for bad_subtitle in item.bad_subtitles
+    )
     command = (
         f'ffmpeg -y -v warning -stats -fflags +genpts -i "{input_path}" -movflags fastart -map 0:V '
-        f'{video_options} -map 0:a {audio_options} -map 0:s? -c:s copy "{output_path}"'
+        f'{video_options} -map 0:a {audio_options} -map 0:s? {bad_subtitles_options} -c:s copy "{output_path}"'
     )
 
     try:
         if os.path.exists(output_path):
             os.remove(output_path)
         print(command)
-        result = subprocess.run(
-            shlex.split(command), stdout=DEVNULL, stderr=PIPE
-        )
+        result = subprocess.run(shlex.split(command), stdout=DEVNULL, stderr=PIPE)
         result.check_returncode()
         shutil.move(
             output_path,
