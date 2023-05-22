@@ -83,7 +83,7 @@ class LocalItem:
             for text_track in metadata.text_tracks
             if text_track.track_type
             if getattr(text_track, "format", "").upper() != "UTF-8"
-            and getattr(text_track, "id", None) is not None
+            and getattr(text_track, "track_id", None) is not None
         ]
 
         self.local_file = os.path.basename(general.complete_name)
@@ -209,7 +209,7 @@ def convert(item: LocalItem):
         else "-c:a copy"
     )
     bad_subtitles_options = " ".join(
-        f"-map -0:s:{getattr(bad_subtitle, 'id')}"
+        f"-map -0:s:{getattr(bad_subtitle, 'track_id')}"
         for bad_subtitle in item.bad_subtitles
     )
     command = (
