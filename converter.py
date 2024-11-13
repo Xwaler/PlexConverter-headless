@@ -263,18 +263,8 @@ def process(category_folder: str, thing: str) -> None:
     path = os.path.join(DOWNLOADS_FOLDER, category_folder, thing)
     recurs_process(path)
     print("--- Passing to Radarr/Sonarr ---")
-    if os.path.isfile(path):
-        output_folder = path.replace(DOWNLOADS_FOLDER, OPTIMIZED_FOLDER)
-        os.makedirs(output_folder, exist_ok=True)
-        converted_filename = thing.rsplit(".", 1)[0] + ".mkv"
-        converted_file = os.path.join(
-            CONVERTED_FOLDER, category_folder, converted_filename
-        )
-        output_file = os.path.join(output_folder, converted_filename)
-        shutil.move(converted_file, output_file)
-    else:
-        converted_folder = os.path.join(CONVERTED_FOLDER, category_folder, thing)
-        recurs_output(converted_folder)
+    converted_folder = os.path.join(CONVERTED_FOLDER, category_folder, thing)
+    recurs_output(converted_folder)
     print("--- Cleanup ---")
     cleanup(path)
     print("Done.")
